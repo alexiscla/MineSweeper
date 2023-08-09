@@ -10,6 +10,8 @@
 
 import ecs100.*;
 import java.awt.Color;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import javax.swing.JButton;
 
 /**
@@ -30,7 +32,6 @@ import javax.swing.JButton;
  *  When all the squares without mines are exposed, the user has won.
  */
 public class MineSweeper {
-
     public static final int ROWS = 15;
     public static final int COLS = 15;
 
@@ -79,7 +80,12 @@ public class MineSweeper {
      */
     public void mark(int row, int col){
         /*# YOUR CODE HERE */
-
+        Square square = squares[row][col];
+        if(!square.isExposed() && !square.isMarked()) {
+            square.mark();
+        } else if (square.isMarked()){
+            square.unMark();
+        }
         square.draw(row, col);
     }
 
@@ -94,7 +100,14 @@ public class MineSweeper {
      */
     public void tryExpose(int row, int col){
         /*# YOUR CODE HERE */
-
+        Square square = squares[row][col];
+        if (!square.isExposed() && !square.isMarked()) {
+            if (square.hasMine()){
+                drawLose();
+            } else {
+                exposeSquareAt(row, col);
+            }
+        }
         if (hasWon()){
             drawWin();
         }
@@ -113,8 +126,24 @@ public class MineSweeper {
      */
     public void exposeSquareAt(int row, int col){
         /*# YOUR CODE HERE */
-
-    }
+        Square square = squares[row][col];
+        if(square.isExposed()) {
+            return;
+        }
+            square.setExposed();
+            square.draw(row, col);
+            if (square.getAdjacentMines() == 0) {
+                int startRow = (row - 1 >= 0 ? row - 1 : 0);
+                int endRow = (row + 1 <= ROWS - 1 ? row + 1 : ROWS - 1);
+                int startCol = (col - 1 >= 0 ? col - 1 : 0);
+                int endCol = (col + 1 <= COLS - 1? col + 1 : COLS - 1);
+                for (int r = startRow; r <= endRow; r++) {
+                    for (int c = startCol; c <= endCol; c++) {
+                        exposeSquareAt(r,c);
+                    }
+                }
+            }
+        }
 
     /** 
      * Returns true if and only if the player has won:
@@ -123,8 +152,14 @@ public class MineSweeper {
      * (It doesn't matter if the squares with a mine have been marked or not).
      */
     public boolean hasWon(){
-        /*# YOUR CODE HERE */
-
+        for (int row=0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                Square square = squares[row][col];
+                if (!square.hasMine() && !square.isExposed()) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -157,7 +192,7 @@ public class MineSweeper {
         this.squares = new Square[ROWS][COLS];
         for (int row=0; row < ROWS; row++){
             for (int col=0; col<COLS; col++){
-                boolean isMine = Math.random()<0.1;     // approx 1 in 10 squares is a mine 
+                boolean isMine = Math.random()<0.01;     // approx 1 in 10 squares is a mine
                 this.squares[row][col] = new Square(isMine);
                 this.squares[row][col].draw(row, col);
             }
